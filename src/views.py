@@ -156,8 +156,8 @@ def generate_main_page_json(
     dt_str: str,
     transactions: List[Dict[str, Any]],
     user_settings_path: str = 'user_settings.json'
-) -> Dict[str, Any]:
-    """Генерирует JSON для главной страницы."""
+) -> str:
+    """Генерирует JSON для главной страницы. Возвращает JSON-строку."""
     try:
         dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
     except Exception:
@@ -179,10 +179,54 @@ def generate_main_page_json(
     currency_rates = get_currency_rates(currencies)
     stock_prices = get_stock_prices(stocks)
 
-    return {
+    data = {
         'greeting': greeting_by_time(dt),
         'cards': cards,
         'top_transactions': top,
         'currency_rates': currency_rates,
         'stock_prices': stock_prices,
     }
+    
+    return json.dumps(data, ensure_ascii=False, indent=2)
+
+
+def generate_events_page_json(
+    transactions: List[Dict[str, Any]],
+    limit: int = 50
+) -> str:
+    """Генерирует JSON для страницы События. Возвращает JSON-строку с транзакциями."""
+    events = []
+    
+    for tx in transactions[:limit]:
+        date_val = (
+            tx.get('Дата платежа') or
+            tx.get('Дата операции') or
+            tx.get('Дата')
+        )
+        d = _parse_tx_date(date_val)
+        
+        amt = parse_amount(
+            tx.get('Сумма операции') or
+            tx.get('Сумма') or
+            tx.get('Сумма платежа')
+        )
+        
+        event = {
+            'date': d.strftime('%Y-%m-%d') if d else None,
+            'date_display': d.strftime('%d.%m.%Y') if d else None,
+            'amount': amt,
+            'category': tx.get('Категория') or tx.get('category') or 'Без категории',
+            'description': tx.get('Описание') or tx.get('description') or '',
+            'card': str(tx.get('Номер карты') or '').strip()[-4:] if tx.get('Номер карты') else None,
+        }
+        events.append(event)
+    
+    # Сортируем по дате (новые сначала)
+    events.sort(key=lambda x: x['date'] if x['date'] else '', reverse=True)
+    
+    data = {
+        'events': events,
+        'total': len(events)
+    }
+    
+    return json.dumps(data, ensure_ascii=False, indent=2)

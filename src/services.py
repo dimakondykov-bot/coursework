@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional, Any
 import math
 import re
+import json
 
 from src.utils import parse_year_month, parse_amount
 
@@ -83,8 +84,8 @@ def investment_bank(month: str, transactions: List[Dict[str, Any]], limit: int) 
     return round(total, 2)
 
 
-def simple_search(query: str, transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Простой поиск по полям 'Описание' и 'Категория'."""
+def simple_search(query: str, transactions: List[Dict[str, Any]]) -> str:
+    """Простой поиск по полям 'Описание' и 'Категория'. Возвращает JSON-строку."""
     q = str(query).casefold()
     out = []
     for tx in transactions:
@@ -100,11 +101,17 @@ def simple_search(query: str, transactions: List[Dict[str, Any]]) -> List[Dict[s
         ).casefold()
         if q in desc or q in cat:
             out.append(tx)
-    return out
+    
+    data = {
+        'query': query,
+        'results': out,
+        'count': len(out)
+    }
+    return json.dumps(data, ensure_ascii=False, indent=2)
 
 
-def search_phone_numbers(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Найти транзакции, в описании которых есть мобильный номер."""
+def search_phone_numbers(transactions: List[Dict[str, Any]]) -> str:
+    """Найти транзакции, в описании которых есть мобильный номер. Возвращает JSON-строку."""
     pattern = r"(?:\+7|8)?[\s-]*\(?\d{3}\)?[\s-]*\d{1,3}[\s-]*\d{2}[\s-]*\d{2}"
     phone_re = re.compile(pattern)
     out = []
@@ -116,11 +123,16 @@ def search_phone_numbers(transactions: List[Dict[str, Any]]) -> List[Dict[str, A
         )
         if phone_re.search(desc):
             out.append(tx)
-    return out
+    
+    data = {
+        'results': out,
+        'count': len(out)
+    }
+    return json.dumps(data, ensure_ascii=False, indent=2)
 
 
-def search_person_transfers(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Найти переводы физлицам."""
+def search_person_transfers(transactions: List[Dict[str, Any]]) -> str:
+    """Найти переводы физлицам. Возвращает JSON-строку."""
     name_re = re.compile(r'\b[А-ЯЁA-Z][а-яёa-z]+\s+[А-ЯЁA-Z]\.')
     out = []
     for tx in transactions:
@@ -132,4 +144,9 @@ def search_person_transfers(transactions: List[Dict[str, Any]]) -> List[Dict[str
         )
         if str(cat).lower() == 'переводы' and name_re.search(desc):
             out.append(tx)
-    return out
+    
+    data = {
+        'results': out,
+        'count': len(out)
+    }
+    return json.dumps(data, ensure_ascii=False, indent=2)
