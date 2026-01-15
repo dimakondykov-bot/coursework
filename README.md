@@ -68,3 +68,16 @@ summary = reports.monthly_summary(operations, 2025, 1)
 poetry run pytest -q
 ```
 
+## Покрытие тестами
+
+Для генерации HTML-отчёта о покрытии тестами:
+
+```bash
+poetry run pytest --cov=src --cov-report=html
+```
+
+Отчёт будет сгенерирован в директории `htmlcov/`. Откройте файл `htmlcov/index.html` в браузере для просмотра детального отчёта о покрытии кода тестами.
+
+Текущее покрытие: **74%** (см. `htmlcov/index.html`)
+
+Примечание: директория `htmlcov/` игнорируется Git и не попадает в репозиторий.
